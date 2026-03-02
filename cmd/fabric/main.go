@@ -1,4 +1,4 @@
-package fabric
+package main
 
 func main() {
 

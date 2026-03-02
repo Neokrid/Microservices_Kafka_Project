@@ -43,7 +43,7 @@ func (c *Container) Start(ctx context.Context) error {
 
 	pool, err := database.NewPostgresPool(ctx, dbURL)
 	if err != nil {
-		return fmt.Errorf("db connection: %w", err)
+		return fmt.Errorf("подключение к бд: %w", err)
 	}
 	c.dbPool = pool
 
@@ -64,7 +64,7 @@ func (c *Container) Start(ctx context.Context) error {
 	}
 
 	go func() {
-		log.Printf("Auth Service started on port %s", c.cfg.HTTP.Port)
+		log.Printf("Auth сервис запущен на порту %s", c.cfg.HTTP.Port)
 		if err := c.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Printf("HTTP server error: %v", err)
 		}
@@ -74,7 +74,7 @@ func (c *Container) Start(ctx context.Context) error {
 }
 
 func (c *Container) Stop(ctx context.Context) error {
-	log.Println("Stopping Auth Service...")
+	log.Println("Остановка auth сервиса")
 
 	if c.dbPool != nil {
 		c.dbPool.Close()
