@@ -1,6 +1,6 @@
 http:
   port: 80
-  maxHeaderBytes: 1
+  maxHeaderBytes: 1048576
   readTimeout: 10s
   writeTimeout: 10s
 

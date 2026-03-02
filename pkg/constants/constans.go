@@ -23,3 +23,4 @@ const (
 	BindPathError      string = "bind_path"
 	UserIdTypeMismatch string = "type_mismatch"
 )
+

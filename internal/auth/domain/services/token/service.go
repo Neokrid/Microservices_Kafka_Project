@@ -37,14 +37,14 @@ func NewService(
 	}
 }
 
-func (s *Service) CreateUserTokens(id uuid.UUID, role string) (*UserTokens, uuid.UUID, uuid.UUID, error) {
+func (s *Service) CreateUserTokens(id uuid.UUID) (*UserTokens, uuid.UUID, uuid.UUID, error) {
 	jtiAccess := uuid.New()
 	jtiRefresh := uuid.New()
-	access, err := generateToken(jtiAccess, id, role, s.accessTokenTTL, s.secret)
+	access, err := generateToken(jtiAccess, id, s.accessTokenTTL, s.secret)
 	if err != nil {
 		return nil, uuid.UUID{}, uuid.UUID{}, err
 	}
-	refresh, err := generateToken(jtiRefresh, id, role, s.refreshTokenTTL, s.secret)
+	refresh, err := generateToken(jtiRefresh, id, s.refreshTokenTTL, s.secret)
 	return &UserTokens{Access: access, Refresh: refresh}, jtiAccess, jtiRefresh, nil
 }
 
@@ -52,8 +52,8 @@ func (s *Service) ParseToken(token string) (*CustomClaims, error) {
 	return parseToken(s.secret, token)
 }
 
-func (s *Service) GenerateUserTokens(ctx context.Context, userId uuid.UUID, role string) (*UserTokens, error) {
-	t, accessId, refreshId, err := s.CreateUserTokens(userId, role)
+func (s *Service) GenerateUserTokens(ctx context.Context, userId uuid.UUID) (*UserTokens, error) {
+	t, accessId, refreshId, err := s.CreateUserTokens(userId)
 	if err != nil {
 		return nil, errors.Wrap(err, ".GenerateUserTokens")
 	}
@@ -92,10 +92,11 @@ func (s *Service) RefreshTokens(ctx context.Context, access, refresh string) (*U
 		dbToken.UserId != aToken.UserId {
 		return nil, customError.TokensDontMatch
 	}
-	t, err := s.GenerateUserTokens(ctx, aToken.UserId, aToken.Role)
+	t, err := s.GenerateUserTokens(ctx, aToken.UserId)
 	if err != nil {
 		return nil, err
 	}
+	
 	err = s.tokenRepo.Delete(ctx, dbToken.Id)
 	if err != nil {
 		return nil, err

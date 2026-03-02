@@ -2,7 +2,6 @@ package configs
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
@@ -11,15 +10,17 @@ import (
 
 type (
 	Config struct {
-		Internal InternalConfig `yaml:"internal"`
 		Postgres PostgresConfig `yaml:"postgres"`
 		HTTP     HTTPConfig     `yaml:"http"`
 		Log      LogConfig      `yaml:"log"`
-		Response ResponseConfig `yaml:"response"`
-		Cache    CacheConfig    `yaml:"Cache"`
 		Jwt      JwtConfig      `yaml:"jwt"`
+		Kafka    KafkaConfig    `yaml:"kafka"`
 	}
 
+	KafkaConfig struct {
+		Brokers []string `yaml:"brokers" env:"KAFKA_BROKERS" env-separator:","`
+		Topic   string   `yaml:"topic" env:"KAFKA_TOPIC" env-default:"orders.events"`
+	}
 	InternalConfig struct {
 		Path               string `yaml:"path" env:"API_PATH"`
 		Environment        string `yaml:"environment" env:"ENVIRONMENT"`
@@ -49,54 +50,39 @@ type (
 	}
 
 	PostgresConfig struct {
-		Host                  string        `yaml:"host" env:"DB_HOST"`
-		Port                  string        `yaml:"port" env:"DB_PORT"`
-		Username              string        `yaml:"username" env:"DB_USERNAME"`
-		Password              string        `yaml:"password" env:"DB_PASSWORD"`
-		DBName                string        `yaml:"dbname" env:"DB_NAME"`
-		Schema                string        `yaml:"schema" env:"DB_SCHEMA"`
-		SSLMode               string        `yaml:"sslmode" env:"DB_SSL_MODE"`
-		SSLRootCert           string        `yaml:"sslrootcert" env:"DB_SSL_ROOT_CERT"`
-		PoolMax               int           `yaml:"poolMax" env:"DB_POOL_MAX"`
-		PoolMin               int           `yaml:"poolMin" env:"DB_POOL_MIN"`
-		HealthCheckPeriod     time.Duration `yaml:"healthCheckPeriod" env:"DB_HEALTH_CHECK_PERIOD"`
-		ConnectionMaxIdleTime time.Duration `yaml:"connectionMaxIdleTime" env:"DB_CONNECTION_MAX_IDLE_TIME"`
-		ConnectionMaxLifeTime time.Duration `yaml:"connectionMaxLifeTime" env:"DB_CONNECTION_MAX_LIFE_TIME"`
+		Host     string `yaml:"host" env:"DB_HOST"`
+		Port     string `yaml:"port" env:"DB_PORT"`
+		Username string `yaml:"username" env:"DB_USERNAME"`
+		Password string `yaml:"password" env:"DB_PASSWORD"`
+		DBName   string `yaml:"dbname" env:"DB_NAME"`
+		SSLMode  string `yaml:"sslmode" env:"DB_SSL_MODE" env-default:"disable"`
 	}
 
 	HTTPConfig struct {
-		Host               string        `yaml:"host" env:"HTTP_HOST"`
-		Port               string        `yaml:"port" env:"HTTP_PORT"`
-		ReadTimeout        time.Duration `yaml:"readTimeout" env:"HTTP_READ_TIMEOUT"`
-		WriteTimeout       time.Duration `yaml:"writeTimeout" env:"HTTP_WRITE_TIMEOUT"`
-		MaxHeaderMegabytes int           `yaml:"maxHeaderBytes"`
+		Port         string        `yaml:"port" env:"HTTP_PORT"`
+		InternalPort string        `yaml:"internal_port" env:"INTERNAL_PORT"`
+		ReadTimeout  time.Duration `yaml:"read_timeout" env-default:"5s"`
 	}
 )
 
-func NewConfig(configDir string) (*Config, error) {
+func NewConfig(configDir string, envPath string) (*Config, error) {
 	cfg := &Config{}
 
-	if _, err := os.Stat(".env"); err == nil {
-		if err := godotenv.Load(".env"); err != nil {
-			return nil, fmt.Errorf("failed to load .env file: %w", err)
+	if err := godotenv.Load(envPath); err != nil {
+
+		fmt.Printf("Warning: %s file not found\n", envPath)
+	}
+
+	if err := cleanenv.ReadConfig(configDir, cfg); err != nil {
+		if err := cleanenv.ReadEnv(cfg); err != nil {
+			return nil, fmt.Errorf("failed to load config: %w", err)
 		}
-	}
-
-	if _, err := os.Stat("./etc/secrets/.env"); err == nil {
-		if err := godotenv.Load(".env"); err != nil {
-			return nil, fmt.Errorf("failed to load .env file: %w", err)
-		}
-	}
-
-	err := cleanenv.ReadConfig(configDir, cfg)
-	if err != nil {
-		return nil, fmt.Errorf("config error: %w", err)
-	}
-
-	err = cleanenv.ReadEnv(cfg)
-	if err != nil {
-		return nil, err
 	}
 
 	return cfg, nil
+}
+
+func (c *Config) GetDBURL() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		c.Postgres.Username, c.Postgres.Password, c.Postgres.Host, c.Postgres.Port, c.Postgres.DBName, c.Postgres.SSLMode)
 }
