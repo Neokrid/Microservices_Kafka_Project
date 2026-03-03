@@ -11,16 +11,6 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type OrderEvent struct {
-	EventType string        `json:"event_type"`
-	Payload   *orders.Order `json:"payload"`
-	SentAt    time.Time     `json:"sent_at"`
-}
-
-type KafkaPublisher struct {
-	writer *kafka.Writer
-}
-
 func NewKafkaPublisher(brokers []string, topic string) *KafkaPublisher {
 	fmt.Printf("KAFKA DEBUG: Подключаемся к %v, топик: '%s'\n", brokers, topic)
 	return &KafkaPublisher{
