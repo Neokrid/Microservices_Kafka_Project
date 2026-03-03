@@ -2,9 +2,8 @@ package constants
 
 //Status
 const (
-	StatusCreated    = "created"
-	StatusInProgress = "in_progress"
-	StatusDone       = "done"
+	StatusCreated = "created"
+	StatusDone    = "done"
 )
 
 // Context
@@ -23,4 +22,3 @@ const (
 	BindPathError      string = "bind_path"
 	UserIdTypeMismatch string = "type_mismatch"
 )
-

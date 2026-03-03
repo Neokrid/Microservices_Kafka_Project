@@ -28,7 +28,7 @@ func (o *Order) CanChangeStatus(newStatus string) error {
 	if o.order.Status == constants.StatusDone {
 		return errors.New("недопустимый  статус")
 	}
-	if o.order.Status == constants.StatusInProgress && newStatus == constants.StatusCreated {
+	if o.order.Status == constants.StatusCreated {
 		return errors.New("недопустимый  статус")
 	}
 	return nil

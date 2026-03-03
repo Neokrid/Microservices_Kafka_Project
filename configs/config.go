@@ -18,8 +18,9 @@ type (
 	}
 
 	KafkaConfig struct {
-		Brokers []string `yaml:"brokers" env:"KAFKA_BROKERS" env-separator:","`
-		Topic   string   `yaml:"topic" env:"KAFKA_TOPIC" env-default:"orders.events"`
+		Brokers   []string `yaml:"brokers" env:"KAFKA_BROKERS" env-separator:","`
+		Topic     string   `yaml:"topic" env:"KAFKA_TOPIC" env-default:"orders.v1.events"`
+		OrderPath string   `yaml:"path" env:"ORDERS_SERVICE_URL"`
 	}
 	InternalConfig struct {
 		Path               string `yaml:"path" env:"API_PATH"`
